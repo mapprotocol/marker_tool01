@@ -81,3 +81,23 @@ func setElectableValidators(endpoint string, from common.Address, privateKey *ec
 	getResult(cli, txHash)
 	log.Info("setElectableValidators", "minElectableValidators", minElectableValidators, "maxElectableValidators", maxElectableValidators)
 }
+
+func getCommissionUpdateDelay(endpoint string) {
+	cli := dial(endpoint)
+	parsed := parseABI(ValidatorsABI)
+	input := packInput(parsed, "commissionUpdateDelay")
+	output := CallContract(cli, GenesisAddresses["ValidatorsProxy"], input)
+	var value *big.Int
+	if err := parsed.UnpackIntoInterface(&value, "commissionUpdateDelay", output); err != nil {
+		log.Crit("unpack failed", "err", err.Error())
+	}
+	log.Info("getCommissionUpdateDelay", "delayBlock", value)
+}
+
+func setCommissionUpdateDelay(endpoint string, from common.Address, privateKey *ecdsa.PrivateKey, delayBlock *big.Int) {
+	cli := dial(endpoint)
+	input := packInput(parseABI(ValidatorsABI), "setCommissionUpdateDelay", delayBlock)
+	txHash := sendContractTransaction(cli, from, GenesisAddresses["ValidatorsProxy"], nil, privateKey, input, 0)
+	getResult(cli, txHash)
+	log.Info("setCommissionUpdateDelay", "address", from, "delayBlock", delayBlock)
+}

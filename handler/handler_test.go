@@ -61,3 +61,21 @@ func Test_setElectableValidators(t *testing.T) {
 	max := big.NewInt(100)
 	setElectableValidators(endpoint, from, privateKey, min, max)
 }
+
+func Test_getCommissionUpdateDelay(t *testing.T) {
+	getCommissionUpdateDelay(endpoint)
+}
+
+// INFO [09-01|13:49:27.696] getCommissionUpdateDelay                 delayBlock=51840
+// INFO [09-01|13:50:39.086] setCommissionUpdateDelay                 address=0xeC3E016916BA9F10762e33e03E8556409d096FB4 delayBlock=10
+// INFO [09-01|13:50:54.801] getCommissionUpdateDelay                 delayBlock=10
+
+func Test_setCommissionUpdateDelay(t *testing.T) {
+	from := common.HexToAddress("")
+	privateKey, err := crypto.ToECDSA(common.FromHex(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	delayBlock := big.NewInt(10)
+	setCommissionUpdateDelay(endpoint, from, privateKey, delayBlock)
+}
