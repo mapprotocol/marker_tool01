@@ -1,14 +1,13 @@
 package handler
 
 import (
-	"math/big"
-	"testing"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"math/big"
+	"testing"
 )
 
-var endpoint = "http://18.142.54.137:7445"
+var endpoint = "http://127.0.0.1:7445"
 
 func Test_getMgrMaintainerAddress(t *testing.T) {
 	getMgrMaintainerAddress(endpoint)
@@ -28,10 +27,6 @@ func Test_setMgrMaintainerAddress(t *testing.T) {
 func Test_getTargetEpochPayment(t *testing.T) {
 	getTargetEpochPayment(endpoint)
 }
-
-// INFO [08-18|15:32:31.365] getTargetEpochPayment                    value=50,000,000,000,000,000,000,000
-// INFO [08-18|15:47:45.804] getTargetEpochPayment                    value=60,000,000,000,000,000,000,000
-// INFO [08-18|15:49:36.350] getTargetEpochPayment                    value=50,000,000,000,000,000,000,000
 
 func Test_setTargetEpochPayment(t *testing.T) {
 	from := common.HexToAddress("")
@@ -66,10 +61,6 @@ func Test_getCommissionUpdateDelay(t *testing.T) {
 	getCommissionUpdateDelay(endpoint)
 }
 
-// INFO [09-01|13:49:27.696] getCommissionUpdateDelay                 delayBlock=51840
-// INFO [09-01|13:50:39.086] setCommissionUpdateDelay                 address=0xeC3E016916BA9F10762e33e03E8556409d096FB4 delayBlock=10
-// INFO [09-01|13:50:54.801] getCommissionUpdateDelay                 delayBlock=10
-
 func Test_setCommissionUpdateDelay(t *testing.T) {
 	from := common.HexToAddress("")
 	privateKey, err := crypto.ToECDSA(common.FromHex(""))
@@ -78,4 +69,34 @@ func Test_setCommissionUpdateDelay(t *testing.T) {
 	}
 	delayBlock := big.NewInt(10)
 	setCommissionUpdateDelay(endpoint, from, privateKey, delayBlock)
+}
+
+func Test_getUnlockingPeriod(t *testing.T) {
+	getUnlockingPeriod(endpoint)
+}
+
+func Test_setUnlockingPeriod(t *testing.T) {
+	from := common.HexToAddress("")
+	privateKey, err := crypto.ToECDSA(common.FromHex(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	period := big.NewInt(900)
+	setUnlockingPeriod(endpoint, from, privateKey, period)
+}
+
+func Test_getImplAddress(t *testing.T) {
+	proxyAddress := common.HexToAddress("")
+	getImplAddress(endpoint, proxyAddress)
+}
+
+func Test_setImplAddress(t *testing.T) {
+	proxyAddress := common.HexToAddress("")
+	implAddress := common.HexToAddress("")
+	from := common.HexToAddress("")
+	privateKey, err := crypto.ToECDSA(common.FromHex(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	setImplAddress(endpoint, from, privateKey, proxyAddress, implAddress)
 }

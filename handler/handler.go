@@ -101,3 +101,43 @@ func setCommissionUpdateDelay(endpoint string, from common.Address, privateKey *
 	getResult(cli, txHash)
 	log.Info("setCommissionUpdateDelay", "address", from, "delayBlock", delayBlock)
 }
+
+func getUnlockingPeriod(endpoint string) {
+	cli := dial(endpoint)
+	parsed := parseABI(LockedGoldABI)
+	input := packInput(parsed, "unlockingPeriod")
+	output := CallContract(cli, GenesisAddresses["LockedGoldProxy"], input)
+	var period *big.Int
+	if err := parsed.UnpackIntoInterface(&period, "unlockingPeriod", output); err != nil {
+		log.Crit("unpack failed", "err", err.Error())
+	}
+	log.Info("getUnlockingPeriod", "period", period)
+}
+
+func setUnlockingPeriod(endpoint string, from common.Address, privateKey *ecdsa.PrivateKey, period *big.Int) {
+	cli := dial(endpoint)
+	input := packInput(parseABI(LockedGoldABI), "setUnlockingPeriod", period)
+	txHash := sendContractTransaction(cli, from, GenesisAddresses["LockedGoldProxy"], nil, privateKey, input, 0)
+	getResult(cli, txHash)
+	log.Info("setCommissionUpdateDelay", "from", from, "period", period)
+}
+
+func getImplAddress(endpoint string, proxyAddress common.Address) {
+	cli := dial(endpoint)
+	parsed := parseABI(ProxyABI)
+	input := packInput(parsed, "_getImplementation")
+	output := CallContract(cli, proxyAddress, input)
+	var implAddress common.Address
+	if err := parsed.UnpackIntoInterface(&implAddress, "_getImplementation", output); err != nil {
+		log.Crit("unpack failed", "err", err.Error())
+	}
+	log.Info("getImplAddress", "proxy", proxyAddress, "impl", implAddress)
+}
+
+func setImplAddress(endpoint string, from common.Address, privateKey *ecdsa.PrivateKey, proxyAddress, implAddress common.Address) {
+	cli := dial(endpoint)
+	input := packInput(parseABI(ProxyABI), "_setImplementation", implAddress)
+	txHash := sendContractTransaction(cli, from, proxyAddress, nil, privateKey, input, 0)
+	getResult(cli, txHash)
+	log.Info("setImplAddress", "from", from, "proxy", proxyAddress, "impl", implAddress)
+}
