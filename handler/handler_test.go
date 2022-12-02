@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-var endpoint = "http://127.0.0.1:7445"
+var endpoint = "https://rpc.maplabs.io"
 
 func Test_getMgrMaintainerAddress(t *testing.T) {
 	getMgrMaintainerAddress(endpoint)
@@ -99,4 +99,41 @@ func Test_setImplAddress(t *testing.T) {
 		t.Fatal(err)
 	}
 	setImplAddress(endpoint, from, privateKey, proxyAddress, implAddress)
+}
+
+func Test_getParticipationParameters(t *testing.T) {
+	governanceAddr := common.HexToAddress("0xcdB66B1e6A07279df98f804d0aCAC86695F4b99e")
+	getParticipationParameters(endpoint, governanceAddr)
+}
+
+func Test_setBaselineQuorumFactor(t *testing.T) {
+	governanceAddr := common.HexToAddress("0xcdB66B1e6A07279df98f804d0aCAC86695F4b99e")
+	baselineQuorumFactor, b := new(big.Int).SetString("100000000000000000", 10)
+	if !b {
+		panic("convert failed")
+	}
+	getParticipationParameters(endpoint, governanceAddr)
+	from := common.HexToAddress("")
+	privateKey, err := crypto.ToECDSA(common.FromHex(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	setBaselineQuorumFactor(endpoint, from, privateKey, governanceAddr, baselineQuorumFactor)
+}
+
+func Test_getPledgeMultiplierInReward(t *testing.T) {
+	getPledgeMultiplierInReward(endpoint)
+}
+
+func Test_setPledgeMultiplierInReward(t *testing.T) {
+	pledgeMultiplier, b := new(big.Int).SetString("700000000000000000", 10)
+	if !b {
+		panic("convert failed")
+	}
+	from := common.HexToAddress("")
+	privateKey, err := crypto.ToECDSA(common.FromHex(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	setPledgeMultiplierInReward(endpoint, from, privateKey, pledgeMultiplier)
 }

@@ -141,3 +141,56 @@ func setImplAddress(endpoint string, from common.Address, privateKey *ecdsa.Priv
 	getResult(cli, txHash)
 	log.Info("setImplAddress", "from", from, "proxy", proxyAddress, "impl", implAddress)
 }
+
+func getPledgeMultiplierInReward(endpoint string) {
+	cli := dial(endpoint)
+	parsed := parseABI(ValidatorsABI)
+	input := packInput(parsed, "pledgeMultiplierInReward")
+	output := CallContract(cli, GenesisAddresses["ValidatorsProxy"], input)
+	var value *big.Int
+	if err := parsed.UnpackIntoInterface(&value, "pledgeMultiplierInReward", output); err != nil {
+		log.Crit("unpack failed", "err", err.Error())
+	}
+	log.Info("getPledgeMultiplierInReward", "pledgeMultiplier", value)
+}
+
+func setPledgeMultiplierInReward(endpoint string, from common.Address, privateKey *ecdsa.PrivateKey, pledgeMultiplier *big.Int) {
+	cli := dial(endpoint)
+	input := packInput(parseABI(ValidatorsABI), "setPledgeMultiplierInReward", pledgeMultiplier)
+	txHash := sendContractTransaction(cli, from, GenesisAddresses["ValidatorsProxy"], nil, privateKey, input, 0)
+	getResult(cli, txHash)
+	log.Info("setPledgeMultiplierInReward", "address", from, "pledgeMultiplier", pledgeMultiplier)
+}
+
+func getParticipationParameters(endpoint string, governanceAddr common.Address) {
+	cli := dial(endpoint)
+	parsed := parseABI(GovernanceABI)
+	input := packInput(parsed, "getParticipationParameters")
+	output := CallContract(cli, governanceAddr, input)
+
+	var (
+		baseline             *big.Int
+		baselineFloor        *big.Int
+		baselineUpdateFactor *big.Int
+		baselineQuorumFactor *big.Int
+	)
+	params := []*big.Int{baseline, baselineFloor, baselineUpdateFactor, baselineQuorumFactor}
+	if err := parsed.UnpackIntoInterface(&params, "getParticipationParameters", output); err != nil {
+		log.Crit("unpack failed", "err", err.Error())
+	}
+	log.Info(
+		"getParticipationParameters",
+		"baseline", params[0],
+		"baselineFloor", params[1],
+		"baselineUpdateFactor", params[2],
+		"baselineQuorumFactor", params[3],
+	)
+}
+
+func setBaselineQuorumFactor(endpoint string, from common.Address, privateKey *ecdsa.PrivateKey, governanceAddr common.Address, baselineQuorumFactor *big.Int) {
+	cli := dial(endpoint)
+	input := packInput(parseABI(GovernanceABI), "setBaselineQuorumFactor", baselineQuorumFactor)
+	txHash := sendContractTransaction(cli, from, governanceAddr, nil, privateKey, input, 0)
+	getResult(cli, txHash)
+	log.Info("setBaselineQuorumFactor", "baselineQuorumFactor", baselineQuorumFactor)
+}
