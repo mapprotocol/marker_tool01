@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
@@ -140,4 +141,69 @@ func setImplAddress(endpoint string, from common.Address, privateKey *ecdsa.Priv
 	txHash := sendContractTransaction(cli, from, proxyAddress, nil, privateKey, input, 0)
 	getResult(cli, txHash)
 	log.Info("setImplAddress", "from", from, "proxy", proxyAddress, "impl", implAddress)
+}
+func isPendingDeRegisterValidator(endpoint string, sender common.Address) {
+	cli := dial(endpoint)
+	parsed := parseABI(ValidatorsABI)
+	input := packInput(parsed, "isPendingDeRegisterValidator")
+	output := CallContract2(cli, sender, GenesisAddresses["ValidatorsProxy"], input)
+	var result bool
+	if err := parsed.UnpackIntoInterface(&result, "isPendingDeRegisterValidator", output); err != nil {
+		log.Crit("unpack failed", "err", err.Error())
+	}
+	log.Info("getUnlockingPeriod", "result", result)
+}
+func getActiveVotesForValidator(endpoint string, addr common.Address, height *big.Int) {
+	cli := dial(endpoint)
+	parsed := parseABI(ElectionABI)
+	input := packInput(parsed, "getActiveVotesForValidator", addr)
+	output := CallContract3(cli, GenesisAddresses["ElectionProxy"], input, height)
+	var res *big.Int
+	if err := parsed.UnpackIntoInterface(&res, "getActiveVotesForValidator", output); err != nil {
+		log.Crit("unpack failed", "err", err.Error())
+	}
+	log.Info("getActiveVotesForValidator", "validator", addr, "height", height.String(), "val", toCoin(res))
+}
+func sendTransaction(endpoint string, from, to common.Address, privateKey *ecdsa.PrivateKey, value *big.Int) {
+	cli := dial(endpoint)
+	txHash := sendTransaction0(cli, from, to, value, privateKey)
+	getResult(cli, txHash)
+}
+func balanceOf(endpoint string, to common.Address) {
+	cli := dial(endpoint)
+	b, e := cli.BalanceAt(context.Background(), to, nil)
+	log.Info("balanceOf", "to", to, "balance", b.String(), "coin", toCoin(b), "error", e)
+}
+func toCoin(val *big.Int) *big.Float {
+	BaseBig := big.NewInt(1e18)
+	return new(big.Float).Quo(new(big.Float).SetInt(val), new(big.Float).SetInt(BaseBig))
+}
+func toWei(value *big.Float) *big.Int {
+	BaseBig := big.NewInt(1e18)
+	base := new(big.Float).SetInt(BaseBig)
+	val, _ := new(big.Float).Mul(value, base).Int(big.NewInt(0))
+	return val
+}
+func getAccountTotalLockedGold(endpoint string, addr common.Address, height *big.Int) {
+	cli := dial(endpoint)
+	parsed := parseABI(LockedGoldABI)
+	input := packInput(parsed, "getAccountTotalLockedGold", addr)
+	output := CallContract3(cli, GenesisAddresses["LockedGoldProxy"], input, height)
+	var res *big.Int
+	if err := parsed.UnpackIntoInterface(&res, "getAccountTotalLockedGold", output); err != nil {
+		log.Crit("unpack failed", "err", err.Error())
+	}
+	log.Info("getAccountTotalLockedGold", "addr", addr, "height", height.String(), "val", toCoin(res))
+}
+
+func getAccountNonvotingLockedGold(endpoint string, addr common.Address, height *big.Int) {
+	cli := dial(endpoint)
+	parsed := parseABI(LockedGoldABI)
+	input := packInput(parsed, "getAccountNonvotingLockedGold", addr)
+	output := CallContract3(cli, GenesisAddresses["LockedGoldProxy"], input, height)
+	var res *big.Int
+	if err := parsed.UnpackIntoInterface(&res, "getAccountNonvotingLockedGold", output); err != nil {
+		log.Crit("unpack failed", "err", err.Error())
+	}
+	log.Info("getAccountNonvotingLockedGold", "addr", addr, "height", height.String(), "val", toCoin(res))
 }

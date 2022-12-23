@@ -106,6 +106,30 @@ func CallContract(client *ethclient.Client, to common.Address, input []byte) []b
 	}
 	return output
 }
+func CallContract3(client *ethclient.Client, to common.Address, input []byte, height *big.Int) []byte {
+	msg := ethereum.CallMsg{
+		From: zeroAddr,
+		To:   &to,
+		Data: input,
+	}
+	output, err := client.CallContract(context.Background(), msg, height)
+	if err != nil {
+		log.Crit("method CallContract error", "err", err)
+	}
+	return output
+}
+func CallContract2(client *ethclient.Client, sender, to common.Address, input []byte) []byte {
+	msg := ethereum.CallMsg{
+		From: sender,
+		To:   &to,
+		Data: input,
+	}
+	output, err := client.CallContract(context.Background(), msg, nil)
+	if err != nil {
+		log.Crit("method CallContract error", "err", err)
+	}
+	return output
+}
 
 func sendContractTransaction(client *ethclient.Client, from, toAddress common.Address, value *big.Int, privateKey *ecdsa.PrivateKey, input []byte, gasLimitSetting uint64) common.Hash {
 	// Ensure a valid value field and resolve the account nonce
@@ -143,6 +167,34 @@ func sendContractTransaction(client *ethclient.Client, from, toAddress common.Ad
 
 	chainID, _ := client.ChainID(context.Background())
 	logger.Info("tx info", "nonce ", nonce, " gasLimit ", gasLimit, " gasPrice ", gasPrice, " chainID ", chainID)
+	signer := types.LatestSignerForChainID(chainID)
+	signedTx, err := types.SignTx(tx, signer, privateKey)
+	if err != nil {
+		log.Crit("SignTx", "error", err)
+	}
+
+	err = client.SendTransaction(context.Background(), signedTx)
+	if err != nil {
+		log.Crit("SendTransaction", "error", err)
+	}
+	return signedTx.Hash()
+}
+func sendTransaction0(client *ethclient.Client, from, to common.Address, value *big.Int, privateKey *ecdsa.PrivateKey) common.Hash {
+	// Ensure a valid value field and resolve the account nonce
+	logger := log.New("func", "sendTransaction0")
+	nonce, err := client.PendingNonceAt(context.Background(), from)
+	if err != nil {
+		logger.Error("PendingNonceAt", "error", err)
+	}
+	//gasPrice, err := client.SuggestGasPrice(context.Background())
+	//if err != nil {
+	//	log.Error("SuggestGasPrice", "error", err)
+	//}
+	gasPrice := big.NewInt(110 * 1e9)
+	// Create the transaction, sign it and schedule it for execution
+	tx := types.NewTransaction(nonce, to, value, 31000, gasPrice, nil)
+
+	chainID, _ := client.ChainID(context.Background())
 	signer := types.LatestSignerForChainID(chainID)
 	signedTx, err := types.SignTx(tx, signer, privateKey)
 	if err != nil {

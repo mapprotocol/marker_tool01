@@ -13,6 +13,15 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+const (
+	Second = 1
+	Minute = 60 * Second
+	Hour   = 60 * Minute
+	Day    = 24 * Hour
+	Week   = 7 * Day
+	Year   = 365 * Day
+)
+
 const GovernanceABIJSON = `[
     {
       "inputs": [
@@ -2404,7 +2413,7 @@ var (
 )
 
 var (
-	governanceAddr = common.HexToAddress("0x907C2d220192d3b1F8836063e391F3c93AD725D0")
+	governanceAddr = common.HexToAddress("0xcdB66B1e6A07279df98f804d0aCAC86695F4b99e")
 )
 
 func PackInput(abi abi.ABI, abiMethod string, params ...interface{}) []byte {
@@ -2416,23 +2425,23 @@ func PackInput(abi abi.ABI, abiMethod string, params ...interface{}) []byte {
 }
 
 func Initialize(conn *ethclient.Client, from common.Address, priKey *ecdsa.PrivateKey) error {
-	minDeposit, b := new(big.Int).SetString("100000000000000000", 10)
+	minDeposit, b := new(big.Int).SetString("10000000000000000000000", 10) // 10000 map
 	if !b {
 		panic("n1")
 	}
-	participationBaseline, b := new(big.Int).SetString("5000000000000000000000", 10)
+	participationBaseline, b := new(big.Int).SetString("5000000000000000000000", 10) // 0.005
 	if !b {
 		panic("n1")
 	}
-	participationFloor, b := new(big.Int).SetString("10000000000000000000000", 10)
+	participationFloor, b := new(big.Int).SetString("10000000000000000000000", 10) // 0.01
 	if !b {
 		panic("n1")
 	}
-	baselineUpdateFactor, b := new(big.Int).SetString("200000000000000000000000", 10)
+	baselineUpdateFactor, b := new(big.Int).SetString("200000000000000000000000", 10) // 0.2
 	if !b {
 		panic("n1")
 	}
-	baselineQuorumFactor, b := new(big.Int).SetString("1000000000000000000000000", 10)
+	baselineQuorumFactor, b := new(big.Int).SetString("1000000000000000000000000", 10) // 1
 	if !b {
 		panic("n1")
 	}
@@ -2441,13 +2450,13 @@ func Initialize(conn *ethclient.Client, from common.Address, priKey *ecdsa.Priva
 		ABIGovernance,
 		"initialize",
 		common.HexToAddress("0xce10"),
-		common.HexToAddress("0xb243f68e8e3245464d21b79c7ceae347ecc08ea6"),
+		common.HexToAddress("0x1Eb2162cFF732df3FF3D421f69cd1d07a2b5c169"),
 		big.NewInt(3),
 		minDeposit,
-		big.NewInt(2419200), // 队列过期时间 3 周
-		big.NewInt(300),     // 出队频率 5 分钟
-		big.NewInt(300),     // 公投阶段持续时间 5 分钟
-		big.NewInt(86400),   // 执行阶段持续时间 24 小时
+		big.NewInt(4*Week),    // 队列过期时间 4 周
+		big.NewInt(30*Minute), // 出队频率 30 分钟
+		big.NewInt(30*Minute), // 公投阶段持续时间 30 分钟
+		big.NewInt(24*Hour),   // 执行阶段持续时间 24 小时
 		participationBaseline,
 		participationFloor,
 		baselineUpdateFactor,
@@ -2458,15 +2467,92 @@ func Initialize(conn *ethclient.Client, from common.Address, priKey *ecdsa.Priva
 	log.Info("", "hash", hash)
 	return nil
 }
+func setReferendumStageDuration(conn *ethclient.Client, from common.Address, privateKey *ecdsa.PrivateKey, duration *big.Int) {
+	input := packInput(&ABIGovernance, "setReferendumStageDuration", duration)
+	txHash := sendContractTransaction(conn, from, governanceAddr, nil, privateKey, input, 0)
+	getResult(conn, txHash)
+	log.Info("setReferendumStageDuration", "from", from, "duration", duration)
+}
+
+func setExecutionStageDuration(conn *ethclient.Client, from common.Address, privateKey *ecdsa.PrivateKey, duration *big.Int) {
+	input := packInput(&ABIGovernance, "setExecutionStageDuration", duration)
+	txHash := sendContractTransaction(conn, from, governanceAddr, nil, privateKey, input, 0)
+	getResult(conn, txHash)
+	log.Info("setExecutionStageDuration", "from", from, "duration", duration)
+}
+func setDequeueFrequency(conn *ethclient.Client, from common.Address, privateKey *ecdsa.PrivateKey, duration *big.Int) {
+	input := packInput(&ABIGovernance, "setDequeueFrequency", duration)
+	txHash := sendContractTransaction(conn, from, governanceAddr, nil, privateKey, input, 0)
+	getResult(conn, txHash)
+	log.Info("setDequeueFrequency", "from", from, "duration", duration)
+}
+func getDequeueFrequency(conn *ethclient.Client) {
+	input := packInput(&ABIGovernance, "dequeueFrequency")
+	output := CallContract(conn, governanceAddr, input)
+
+	var outvalue *big.Int
+	if err := ABIGovernance.UnpackIntoInterface(&outvalue, "dequeueFrequency", output); err != nil {
+		log.Crit("unpack failed", "err", err.Error())
+	}
+	log.Info("getDequeueFrequency", "dequeueFrequency", outvalue)
+}
+func getExecutionStageDuration(conn *ethclient.Client) {
+	input := packInput(&ABIGovernance, "getExecutionStageDuration")
+	output := CallContract(conn, governanceAddr, input)
+
+	var outvalue *big.Int
+	if err := ABIGovernance.UnpackIntoInterface(&outvalue, "getExecutionStageDuration", output); err != nil {
+		log.Crit("unpack failed", "err", err.Error())
+	}
+	log.Info("getExecutionStageDuration", "executionStageDuration", outvalue)
+}
 
 func TestInitialize(t *testing.T) {
 	cli := dial(endpoint)
-	from := common.HexToAddress("0x55ef9aAA6BFC531129033E39C923d61290108a69")
-	privateKey, err := crypto.ToECDSA(common.FromHex("0x73ccc0c518802cd5547b410d08e4c3da76faf60a463779fb131aa8d4b2fe4c2d"))
+	from := common.HexToAddress("0xB3396Fef0cfC3A5d68b3Ef17e5016815af63102B")
+	privateKey, err := crypto.ToECDSA(common.FromHex(""))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := Initialize(cli, from, privateKey); err != nil {
 		t.Fatal("initialize failed", "err", err.Error())
 	}
+}
+func TestSetReferendumStageDuration(t *testing.T) {
+	cli := dial(endpoint)
+	from := common.HexToAddress("0xB3396Fef0cfC3A5d68b3Ef17e5016815af63102B")
+	privateKey, err := crypto.ToECDSA(common.FromHex(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := big.NewInt(5 * Day)
+	setReferendumStageDuration(cli, from, privateKey, d)
+}
+func TestSetExecutionStageDuration(t *testing.T) {
+	cli := dial(endpoint)
+	from := common.HexToAddress("0xB3396Fef0cfC3A5d68b3Ef17e5016815af63102B")
+	privateKey, err := crypto.ToECDSA(common.FromHex(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := big.NewInt(3 * Day)
+	setExecutionStageDuration(cli, from, privateKey, d)
+}
+func TestSetDequeueFrequency(t *testing.T) {
+	cli := dial(endpoint)
+	from := common.HexToAddress("0xB3396Fef0cfC3A5d68b3Ef17e5016815af63102B")
+	privateKey, err := crypto.ToECDSA(common.FromHex(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := big.NewInt(1 * Day)
+	setDequeueFrequency(cli, from, privateKey, d)
+}
+func TestGetDequeueFrequency(t *testing.T) {
+	cli := dial(endpoint)
+	getDequeueFrequency(cli)
+}
+func TestGetexecutionStageDuration(t *testing.T) {
+	cli := dial(endpoint)
+	getExecutionStageDuration(cli)
 }
