@@ -15,9 +15,6 @@ import (
 	"time"
 )
 
-//var endpoint = "http://127.0.0.1:7445"
-//var endpoint = "http://3.0.19.66:7445" // dev-net
-
 var endpoint = "https://rpc.maplabs.io"
 
 func Test_getMgrMaintainerAddress(t *testing.T) {
