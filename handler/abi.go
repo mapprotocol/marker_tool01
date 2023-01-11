@@ -7559,3 +7559,71 @@ var GovernanceABI = `[
       "type": "function"
     }
   ]`
+
+var BlockchainParametersABI = `[
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getMinimumClientVersion",
+		"outputs": [
+			{
+			"name": "major",
+			"type": "uint256"
+			},
+			{
+			"name": "minor",
+			"type": "uint256"
+			},
+			{
+			"name": "patch",
+			"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "blockGasLimit",
+		"outputs": [
+			{
+			"name": "",
+			"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getUptimeLookbackWindow",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "lookbackWindow",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "intrinsicGasForAlternativeFeeCurrency",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	}
+]`

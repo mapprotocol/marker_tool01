@@ -68,7 +68,9 @@ func Test_setElectableValidators(t *testing.T) {
 func Test_getCommissionUpdateDelay(t *testing.T) {
 	getCommissionUpdateDelay(endpoint)
 }
-
+func Test_getBlockGasLimit(t *testing.T) {
+	getBlockGasLimit(endpoint)
+}
 func Test_setCommissionUpdateDelay(t *testing.T) {
 	from := common.HexToAddress("")
 	privateKey, err := crypto.ToECDSA(common.FromHex(""))

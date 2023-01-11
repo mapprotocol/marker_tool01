@@ -207,3 +207,15 @@ func getAccountNonvotingLockedGold(endpoint string, addr common.Address, height 
 	}
 	log.Info("getAccountNonvotingLockedGold", "addr", addr, "height", height.String(), "val", toCoin(res))
 }
+
+func getBlockGasLimit(endpoint string) {
+	cli := dial(endpoint)
+	parsed := parseABI(BlockchainParametersABI)
+	input := packInput(parsed, "blockGasLimit")
+	output := CallContract(cli, GenesisAddresses["BlockchainParametersProxy"], input)
+	var res *big.Int
+	if err := parsed.UnpackIntoInterface(&res, "blockGasLimit", output); err != nil {
+		log.Crit("unpack failed", "err", err.Error())
+	}
+	log.Info("getBlockGasLimit", "res", toCoin(res), "res0", res)
+}
